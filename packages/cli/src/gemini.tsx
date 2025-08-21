@@ -109,6 +109,7 @@ async function relaunchWithAdditionalArgs(additionalArgs: string[]) {
   process.exit(0);
 }
 import { runZedIntegration } from './zed-integration/zedIntegration.js';
+import { saveChatOnSignal } from './utils/saveChatOnSignal.js';
 
 export function setupUnhandledRejectionHandler() {
   let unhandledRejectionOccurred = false;
@@ -158,6 +159,16 @@ export async function main() {
     sessionId,
     argv,
   );
+
+  if (process.platform !== 'win32') {
+    process.on('SIGUSR2', () => {
+      saveChatOnSignal(config);
+    });
+  } else {
+    process.on('SIGBREAK', () => {
+      saveChatOnSignal(config);
+    });
+  }
 
   const consolePatcher = new ConsolePatcher({
     stderr: true,

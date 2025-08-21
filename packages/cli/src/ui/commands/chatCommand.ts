@@ -15,7 +15,7 @@ import {
   CommandKind,
   SlashCommandActionReturn,
 } from './types.js';
-import { decodeTagName } from '@google/gemini-cli-core';
+import { saveChat, decodeTagName } from '@google/gemini-cli-core';
 import path from 'path';
 import { HistoryItemWithoutId, MessageType } from '../types.js';
 
@@ -135,30 +135,13 @@ const saveCommand: SlashCommand = {
       }
     }
 
-    const chat = await config?.getGeminiClient()?.getChat();
-    if (!chat) {
-      return {
-        type: 'message',
-        messageType: 'error',
-        content: 'No chat client available to save conversation.',
-      };
-    }
+    const result = await saveChat(logger, config, tag);
 
-    const history = chat.getHistory();
-    if (history.length > 2) {
-      await logger.saveCheckpoint(history, tag);
-      return {
-        type: 'message',
-        messageType: 'info',
-        content: `Conversation checkpoint saved with tag: ${decodeTagName(tag)}.`,
-      };
-    } else {
-      return {
-        type: 'message',
-        messageType: 'info',
-        content: 'No conversation found to save.',
-      };
-    }
+    return {
+      type: 'message',
+      messageType: result.success ? 'info' : 'error',
+      content: result.message,
+    };
   },
 };
 
